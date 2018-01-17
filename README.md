@@ -1,2 +1,3 @@
 # smurfy.py
-A simple Python wrapper for https://github.com/smurfy/mwo-api-sample
+A mechlab. Integrates with Smurfy, and hence, includes a simple Python 
+wrapper for https://github.com/smurfy/mwo-api-sample
