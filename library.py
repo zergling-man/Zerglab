@@ -18,13 +18,15 @@ def setkey(inp):
   f.write(inp)
  return True
 
-def cache(thing):
+def cache(thing, tcache=None, key=None):
+ if tcache is None:
+  tcache=thing
  try:
-  with open('{0}.cache'.format(thing)) as a:
+  with open('{0}.cache'.format(tcache)) as a:
    b=json.load(a)
  except FileNotFoundError:
-  with open('{0}.cache'.format(thing),'w') as a:
-   b=get(thing)
+  with open('{0}.cache'.format(tcache),'w') as a:
+   b=get(thing, key)
    a.write(json.dumps(b))
  return b
 
@@ -74,7 +76,38 @@ def getuser():
  return get('user/details',key)
 
 def getbay():
- return get('user/mechbay',key)
+ return cache('user/mechbay',tcache='mechbay',key=key)
+
+def renamemech(mech):
+ loc='https://mwo.smurfy-net.de/api/data/user/mechbay.json'
+ head={'Authorization':'APIKEY %s'%key}
+ out=bytes(json.dumps(mech),'utf-8')
+ d=r.put(loc, data=out, headers=head)
+ return d.status_code==200
+
+def addtobay(mechs):
+ req=preplink(mechs)
+ d=r.request('LINK',req[0],headers=req[1])
+ return d.headers['links']
+
+def removefrombay(mechs):
+ req=preplink(mechs)
+ d=r.request('UNLINK',req[0],headers=req[1])
+ return d.headers['links']
+
+def modifybay(mechs):
+ reqin=preplink(mechs['add'])
+ reqout=preplink(mechs['rem'])
+ d1=r.request('LINK',reqin[0],headers=reqin[1])
+ d2=r.request('UNLINK',reqout[0],headers=reqout[1])
+ return d1.headers['links'].extend(d2.headers['links'])
+
+def preplink(mechs):
+ loc='https://mwo.smurfy-net.de/api/data/user/mechbay.json'
+ loc2='</api/data/mechs/{0}/loadouts/{1}>'
+ links=','.join([loc2.format(mech['mechid'],mech['id']) for mech in mechs])
+ head={'Authorization':'APIKEY %s'%key,'Link':links}
+ return (loc,head)
 
 def sendmech(mech):
  out=bytes(json.dumps(mech),'utf-8')
